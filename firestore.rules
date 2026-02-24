@@ -1,0 +1,76 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: check if user is logged in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function: check if UID matches document field
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      // Authenticated users can read profiles (needed for marketplace visibility)
+      allow read: if isAuthenticated();
+      // Only the user themselves can update their profile
+      allow write: if isOwner(userId);
+    }
+
+    // --- Products Collection ---
+    match /products/{productId} {
+      // Anyone logged in can browse products
+      allow read: if isAuthenticated();
+      
+      // Creating a product: must be logged in and set themselves as manufacturer
+      allow create: if isAuthenticated() && 
+                    request.resource.data.manufacturerId == request.auth.uid;
+      
+      // Updating/Deleting: only the manufacturer who owns the product
+      allow update, delete: if isAuthenticated() && 
+                           resource.data.manufacturerId == request.auth.uid;
+    }
+
+    // --- Orders Collection ---
+    match /orders/{orderId} {
+      // Only the buyer or the manufacturer involved in the order can see it
+      allow read: if isAuthenticated() && (
+        resource.data.buyerId == request.auth.uid || 
+        resource.data.manufacturerId == request.auth.uid
+      );
+      
+      // Only logged in buyers can create an order
+      allow create: if isAuthenticated() && 
+                    request.resource.data.buyerId == request.auth.uid;
+      
+      // Both parties can update (status for manufacturer, cancellation for buyer)
+      allow update: if isAuthenticated() && (
+        resource.data.buyerId == request.auth.uid || 
+        resource.data.manufacturerId == request.auth.uid
+      );
+      
+      // For security and history, orders should not be deleted
+      allow delete: if false;
+    }
+
+    // --- Trade Intelligence Checks ---
+    match /trade_checks/{checkId} {
+      // Only the user who ran the check can view or save it
+      allow read, create: if isAuthenticated() && 
+                          (request.resource.data.userId == request.auth.uid || 
+                           resource.data.userId == request.auth.uid);
+      allow update, delete: if isAuthenticated() && 
+                           resource.data.userId == request.auth.uid;
+    }
+
+    // --- Fallback Rule ---
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
