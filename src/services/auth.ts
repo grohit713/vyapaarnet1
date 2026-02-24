@@ -1,6 +1,6 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth, db } from "../config/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 
 export type UserRole = 'buyer' | 'seller';
 
@@ -25,28 +25,55 @@ export const authService = {
     // Sign in with email and password
     signin: async (email: string, password: string): Promise<User | null> => {
         const result = await signInWithEmailAndPassword(auth, email, password);
-        const firebaseUser = result.user;
+        return authService.handlePostSignIn(result.user);
+    },
 
-        // Check Firestore for user
+    // Sign in with Google
+    signInWithGoogle: async (): Promise<User | null> => {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        return authService.handlePostSignIn(result.user);
+    },
+
+    // Shared logic for checking firestore after signin
+    handlePostSignIn: async (firebaseUser: any): Promise<User | null> => {
+        console.log("Checking Firestore for user:", firebaseUser.uid);
         try {
             const userDocRef = doc(db, 'users', firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
                 const userData = userDoc.data() as User;
+                console.log("User found in Firestore, updating stats...");
+
+                // Track login stats
+                const today = new Date().toISOString().split('T')[0];
+                const stats = (userData as any).loginStats || {};
+                const dailyCount = (stats[today] || 0) + 1;
+
+                try {
+                    await setDoc(userDocRef, {
+                        loginStats: {
+                            ...stats,
+                            [today]: dailyCount,
+                            lastLogin: Timestamp.now()
+                        }
+                    }, { merge: true });
+                } catch (statsErr) {
+                    console.warn("Failed to update login stats (non-critical):", statsErr);
+                }
+
                 localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
                 return userData;
             }
         } catch (error: any) {
-            console.error("Firestore Error:", error);
-            if (error.code === 'unavailable' || error.message.includes('offline')) {
-                console.warn("Offline mode: Proceeding to registration flow.");
+            console.error("Firestore Error during signin:", error);
+            if (error.code === 'unavailable' || error.message.includes('offline') || error.code === 'permission-denied') {
                 return null;
             }
             throw error;
         }
 
-        // Return null if user doesn't exist in DB (caller will trigger registration)
         return null;
     },
 
@@ -56,11 +83,12 @@ export const authService = {
 
         const newUser: User = {
             ...data,
-            id: currentUser.uid, // Use Firebase Auth UID as the User ID
+            id: currentUser.uid,
         };
 
-        // Save to Firestore
-        await setDoc(doc(db, 'users', currentUser.uid), newUser);
+        // Save to Firestore with timeout and verification
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        await setDoc(userDocRef, newUser);
 
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
         return newUser;
