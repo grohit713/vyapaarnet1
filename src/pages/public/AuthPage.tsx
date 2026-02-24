@@ -89,23 +89,6 @@ export const AuthPage: React.FC = () => {
         }
     };
 
-    const handleGoogleSignin = async () => {
-        try {
-            setLoading(true);
-            setError('');
-            const user = await authService.signInWithGoogle();
-            if (user) {
-                navigate(`/${user.role}/dashboard`);
-            } else {
-                setStep('details');
-            }
-        } catch (err: any) {
-            setError(err.message || 'Google sign in failed');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!role) return;
@@ -284,28 +267,6 @@ export const AuthPage: React.FC = () => {
                                 {isSignup ? 'Create Account' : 'Sign In'}
                             </Button>
 
-                            <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ flex: 1, height: '1px', background: 'var(--neutral-gray-200)' }} />
-                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--neutral-gray-400)', textTransform: 'uppercase' }}>Or</span>
-                                <div style={{ flex: 1, height: '1px', background: 'var(--neutral-gray-200)' }} />
-                            </div>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
-                                onClick={handleGoogleSignin}
-                                disabled={loading}
-                            >
-                                <svg width="18" height="18" viewBox="0 0 18 18">
-                                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" />
-                                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853" />
-                                    <path d="M3.964 10.705c-.18-.54-.282-1.117-.282-1.705s.102-1.165.282-1.705V4.963H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.037l3.007-2.332z" fill="#FBBC05" />
-                                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.443 2.017.957 4.963L3.964 7.295C4.672 5.168 6.656 3.58 9 3.58z" fill="#EA4335" />
-                                </svg>
-                                Continue with Google
-                            </Button>
-
                             <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
                                 <p style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-600)' }}>
                                     {isSignup ? 'Already have an account?' : "Don't have an account?"}
@@ -347,6 +308,168 @@ export const AuthPage: React.FC = () => {
                             />
                             {error && <p style={{ color: 'var(--danger-red)', fontSize: '0.875rem', marginBottom: '1rem' }}>{error}</p>}
                             <Button type="submit" isLoading={loading} style={{ width: '100%' }} size="lg">
+                                Complete Setup
+                            </Button>
+                        </form>
+                    )}
+
+                </Card>
+            </div>
+        </div>
+    );
+};
+                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                        {step !== 'role' && (
+                            <div style={{ position: 'absolute', top: '2rem', left: '2rem' }}>
+                                <Button variant="ghost" size="sm" onClick={() => setStep('role')}>
+                                    <ArrowLeft size={16} /> Back
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Small Logo on Card */}
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', opacity: 0.8 }}>
+                            <ShoppingBag size={32} color="var(--primary-teal)" />
+                        </div>
+
+                        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--neutral-gray-900)' }}>
+                            {step === 'role' && 'How will you use VyapaarNet?'}
+                            {step === 'mobile' && 'Get Started'}
+                            {step === 'otp' && 'Verify Mobile'}
+                            {step === 'details' && 'Complete Profile'}
+                        </h2>
+                        <p style={{ color: 'var(--neutral-gray-500)', marginTop: '0.5rem' }}>
+                            {step === 'role' && 'Select your primary role to continue'}
+                            {step === 'mobile' && 'Enter your mobile number to login or signup'}
+                            {step === 'otp' && `Enter the OTP sent to +91 ${formData.mobile}`}
+                            {step === 'details' && 'Tell us a bit about yourself'}
+                        </p>
+                    </div>
+
+                    {/* ---------------- ROLE ---------------- */}
+                    {step === 'role' && (
+                        <>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div
+                                    onClick={() => setRole('buyer')}
+                                    className={`role-card ${role === 'buyer' ? 'selected' : ''}`}
+                                >
+                                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+                                        <Store size={48} color={role === 'buyer' ? 'var(--primary-teal)' : 'var(--neutral-gray-600)'} />
+                                    </div>
+                                    <div style={{ fontWeight: 600, color: 'var(--neutral-gray-900)' }}>Buyer</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-gray-500)' }}>Retailer</div>
+                                </div>
+
+                                <div
+                                    onClick={() => setRole('seller')}
+                                    className={`role-card ${role === 'seller' ? 'selected' : ''}`}
+                                >
+                                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+                                        <Factory size={48} color={role === 'seller' ? 'var(--primary-teal)' : 'var(--neutral-gray-600)'} />
+                                    </div>
+                                    <div style={{ fontWeight: 600, color: 'var(--neutral-gray-900)' }}>Seller</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-gray-500)' }}>Manufacturer</div>
+                                </div>
+                            </div>
+
+                            <Button
+                                style={{ width: '100%', marginTop: '2rem' }}
+                                disabled={!role}
+                                onClick={() => setStep('mobile')}
+                                size="lg"
+                            >
+                                Continue
+                            </Button>
+                        </>
+                    )}
+
+                    {/* ---------------- MOBILE ---------------- */}
+                    {step === 'mobile' && (
+                        <form onSubmit={handleSendOtp}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--neutral-gray-900)' }}>Mobile Number</label>
+                                <div style={{ display: 'flex', borderRadius: '0.375rem', border: '1px solid var(--neutral-gray-300)', overflow: 'hidden' }}>
+                                    <div style={{ background: 'var(--neutral-gray-100)', padding: '0.625rem 1rem', color: 'var(--neutral-gray-600)', borderRight: '1px solid var(--neutral-gray-300)', display: 'flex', alignItems: 'center' }}>
+                                        +91
+                                    </div>
+                                    <input
+                                        type="tel"
+                                        placeholder="Enter your mobile number"
+                                        value={formData.mobile}
+                                        onChange={e => setFormData({ ...formData, mobile: e.target.value })}
+                                        required
+                                        style={{ flex: 1, border: 'none', padding: '0.625rem 1rem', outline: 'none' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div id="recaptcha-container" />
+                            {error && <p style={{ color: 'var(--danger-red)', fontSize: '0.875rem', marginTop: '0.5rem' }}>{error}</p>}
+
+                            <Button type="submit" isLoading={loading} style={{ width: '100%', marginTop: '0.5rem' }} size="lg">
+                                Send OTP
+                            </Button>
+
+                            <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--neutral-gray-500)' }}>
+                                By continuing, you agree to our <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms of Service</span> & <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>
+                            </p>
+                        </form>
+                    )}
+
+                    {/* ---------------- OTP ---------------- */}
+                    {step === 'otp' && (
+                        <form onSubmit={handleVerifyOtp}>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                {[...Array(6)].map((_, i) => (
+                                    <input
+                                        key={i}
+                                        id={`otp-${i}`}
+                                        maxLength={1}
+                                        value={otpValues[i]}
+                                        onChange={e => updateOtp(i, e.target.value)}
+                                        onKeyDown={e => handleKeyDown(i, e)}
+                                        style={{
+                                            width: 48,
+                                            height: 48,
+                                            textAlign: 'center',
+                                            fontSize: '1.25rem',
+                                            border: '1px solid var(--neutral-gray-300)',
+                                            borderRadius: '0.375rem'
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                            {error && <p style={{ color: 'red' }}>{error}</p>}
+                            <Button type="submit" isLoading={loading} style={{ width: '100%', marginTop: '1.5rem' }} size="lg">
+                                Verify & Login
+                            </Button>
+
+                            {timer > 0 ? (
+                                <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--neutral-gray-500)', marginTop: '1rem' }}>Resend OTP in {timer}s</p>
+                            ) : (
+                                <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--primary-teal)', marginTop: '1rem', cursor: 'pointer' }} onClick={handleSendOtp}>Resend OTP</p>
+                            )}
+                        </form>
+                    )}
+
+                    {/* ---------------- DETAILS ---------------- */}
+                    {step === 'details' && (
+                        <form onSubmit={handleRegister}>
+                            <Input
+                                label={role === 'buyer' ? "Shop / Business Name" : "Company Name"}
+                                value={formData.companyName}
+                                onChange={e => setFormData({ ...formData, companyName: e.target.value })}
+                                required
+                            />
+                            <Input
+                                label="Full Name"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                required
+                            />
+                            {error && <p style={{ color: 'red' }}>{error}</p>}
+                            <Button type="submit" isLoading={loading} style={{ width: '100%', marginTop: '1rem' }} size="lg">
                                 Complete Setup
                             </Button>
                         </form>

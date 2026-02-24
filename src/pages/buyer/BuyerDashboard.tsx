@@ -52,7 +52,6 @@ interface Order {
   id: string;
   productId: string;
   productName: string;
-  manufacturerId: string;
   manufacturerName: string;
   quantity: number;
   unit: string;
@@ -340,10 +339,6 @@ const DashboardHome = ({
         })) as Order[];
         setOrders(ordersData);
         setLoadingMetrics(false);
-      },
-      (error) => {
-        console.error("Error fetching orders metrics:", error);
-        setLoadingMetrics(false);
       }
     );
 
@@ -378,20 +373,20 @@ const DashboardHome = ({
           marginBottom: "3rem",
         }}
       >
-        <MetricCard
-          label="Total Orders"
-          value={loadingMetrics ? "..." : totalOrders.toString()}
-          subtext={totalOrders === 0 ? "No orders yet" : `${totalOrders} order${totalOrders !== 1 ? 's' : ''}`}
+        <MetricCard 
+          label="Total Orders" 
+          value={loadingMetrics ? "..." : totalOrders.toString()} 
+          subtext={totalOrders === 0 ? "No orders yet" : `${totalOrders} order${totalOrders !== 1 ? 's' : ''}`} 
         />
         <MetricCard
           label="In Progress"
           value={loadingMetrics ? "..." : pendingOrders.toString()}
           subtext={pendingOrders === 0 ? "All caught up" : `${pendingOrders} awaiting confirmation`}
         />
-        <MetricCard
-          label="Completed"
-          value={loadingMetrics ? "..." : deliveredOrders.toString()}
-          subtext={deliveredOrders === 0 ? "No deliveries yet" : `${deliveredOrders} delivered order${deliveredOrders !== 1 ? 's' : ''}`}
+        <MetricCard 
+          label="Completed" 
+          value={loadingMetrics ? "..." : deliveredOrders.toString()} 
+          subtext={deliveredOrders === 0 ? "No deliveries yet" : `${deliveredOrders} delivered order${deliveredOrders !== 1 ? 's' : ''}`} 
         />
         <MetricCard label="Saved Amount" value="₹0" subtext="Track your savings" />
       </div>
@@ -458,48 +453,48 @@ const DashboardHome = ({
             <div
               style={{
                 width: "3.5rem",
-                height: "3.5rem",
-                borderRadius: "50%",
-                backgroundColor: cat.color,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "transform 0.2s",
-              }}
-            >
-              <cat.icon size={24} style={{ color: cat.iconColor }} />
-            </div>
-            <div style={{ fontWeight: 600, color: "var(--neutral-gray-700)" }}>
-              {cat.label}
-            </div>
+              height: "3.5rem",
+              borderRadius: "50%",
+              backgroundColor: cat.color,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "transform 0.2s",
+            }}
+          >
+            <cat.icon size={24} style={{ color: cat.iconColor }} />
           </div>
-        ))}
-      </div>
-
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1rem" }}>
-        Quick Actions
-      </h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "1.5rem",
-        }}
-      >
-        <ActionCard
-          title="Find Manufacturers"
-          desc="Browse verified manufacturers in your category"
-          btnText="Browse"
-          onClick={() => onViewChange("manufacturers")}
-        />
-        <ActionCard
-          title="Track Orders"
-          desc="Monitor your order status in real-time"
-          btnText="View Orders"
-          onClick={() => onViewChange("orders")}
-        />
-      </div>
+          <div style={{ fontWeight: 600, color: "var(--neutral-gray-700)" }}>
+            {cat.label}
+          </div>
+        </div>
+      ))}
     </div>
+
+    <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1rem" }}>
+      Quick Actions
+    </h2>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gap: "1.5rem",
+      }}
+    >
+      <ActionCard
+        title="Find Manufacturers"
+        desc="Browse verified manufacturers in your category"
+        btnText="Browse"
+        onClick={() => onViewChange("manufacturers")}
+      />
+      <ActionCard
+        title="Track Orders"
+        desc="Monitor your order status in real-time"
+        btnText="View Orders"
+        onClick={() => onViewChange("orders")}
+      />
+    </div>
+  </div>
   );
 };
 
@@ -515,7 +510,6 @@ const ManufacturersList = ({
   const [orderQuantity, setOrderQuantity] = useState<number>(0);
   const [orderLoading, setOrderLoading] = useState(false);
   const user = authService.getCurrentUser();
-  const navigate = useNavigate();
 
   React.useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
@@ -525,13 +519,6 @@ const ManufacturersList = ({
       })) as Product[];
       setProducts(productsData);
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching products:", error);
-      setLoading(false);
-      // Only alert if we're in a state that should have products
-      if (error.code === 'permission-denied') {
-        alert("Firestore Permission Denied. Please check your Security Rules in the Firebase Console.");
-      }
     });
 
     return () => unsubscribe();
@@ -559,7 +546,6 @@ const ManufacturersList = ({
       const newOrder: Omit<Order, "id"> = {
         productId: product.id,
         productName: product.name,
-        manufacturerId: product.manufacturerId,
         manufacturerName: product.manufacturerName,
         quantity: orderQuantity,
         unit: product.unit,
@@ -782,10 +768,7 @@ const ManufacturersList = ({
                         marginBottom: "0.5rem",
                       }}
                     >
-                      <h3
-                        onClick={() => navigate(`/manufacturer/${product.manufacturerId}`)}
-                        style={{ fontSize: "1.25rem", fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-                      >
+                      <h3 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
                         {product.manufacturerName}
                       </h3>
                       <div
@@ -1066,240 +1049,220 @@ const ManufacturersList = ({
 };
 
 const OrdersList = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const user = authService.getCurrentUser();
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+    const user = authService.getCurrentUser();
 
-  React.useEffect(() => {
-    if (!user?.id) return;
+    React.useEffect(() => {
+        if (!user?.id) return;
 
-    const unsubscribe = onSnapshot(
-      query(collection(db, 'orders'), where('buyerId', '==', user.id)),
-      (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Order[];
-        setOrders(ordersData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()));
-        setLoading(false);
-      }
-    );
+        const unsubscribe = onSnapshot(
+            query(collection(db, 'orders'), where('buyerId', '==', user.id)),
+            (snapshot) => {
+                const ordersData = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Order[];
+                setOrders(ordersData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()));
+                setLoading(false);
+            }
+        );
 
-    return () => unsubscribe();
-  }, [user?.id]);
+        return () => unsubscribe();
+    }, [user?.id]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { bg: '#fef3c7', color: '#92400e', icon: Clock };
-      case 'confirmed':
-        return { bg: '#dbeafe', color: '#0c4a6e', icon: Check };
-      case 'shipped':
-        return { bg: '#e0e7ff', color: '#312e81', icon: Truck };
-      case 'delivered':
-        return { bg: '#dcfce7', color: '#166534', icon: CheckCircle2 };
-      default:
-        return { bg: '#f3f4f6', color: '#374151', icon: PackageIcon };
-    }
-  };
-
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const { doc, updateDoc } = await import('firebase/firestore');
-      const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, {
-        status: newStatus,
-        deliveryDate: newStatus === 'delivered' ? Timestamp.now() : null
-      });
-      alert(`Order marked as ${newStatus}!`);
-    } catch (error) {
-      console.error("Error updating order:", error);
-      alert("Failed to update status");
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      pending: 'Pending Confirmation',
-      confirmed: 'Confirmed',
-      shipped: 'Shipped',
-      delivered: 'Delivered'
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pending':
+                return { bg: '#fef3c7', color: '#92400e', icon: Clock };
+            case 'confirmed':
+                return { bg: '#dbeafe', color: '#0c4a6e', icon: Check };
+            case 'shipped':
+                return { bg: '#e0e7ff', color: '#312e81', icon: Truck };
+            case 'delivered':
+                return { bg: '#dcfce7', color: '#166534', icon: CheckCircle2 };
+            default:
+                return { bg: '#f3f4f6', color: '#374151', icon: PackageIcon };
+        }
     };
-    return labels[status] || status;
-  };
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
+    const getStatusLabel = (status: string) => {
+        const labels: Record<string, string> = {
+            pending: 'Pending Confirmation',
+            confirmed: 'Confirmed',
+            shipped: 'Shipped',
+            delivered: 'Delivered'
+        };
+        return labels[status] || status;
+    };
 
-  return (
-    <div className="animate-fade-in">
-      <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '2rem' }}>My Orders</h1>
+    const formatDate = (timestamp: any) => {
+        if (!timestamp) return 'N/A';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
 
-      {loading && (
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <Loader2 className="animate-spin" style={{ margin: '0 auto' }} />
-        </div>
-      )}
+    return (
+        <div className="animate-fade-in">
+            <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '2rem' }}>My Orders</h1>
 
-      {!loading && orders.length === 0 && (
-        <div className="card-modern" style={{ textAlign: 'center', padding: '3rem', color: 'var(--neutral-gray-500)' }}>
-          <ShoppingBag size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-          <p style={{ fontSize: '1.125rem', fontWeight: 500, marginBottom: '0.5rem' }}>No orders yet</p>
-          <p style={{ fontSize: '0.875rem' }}>Start by browsing products and placing your first order</p>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gap: '1.5rem' }}>
-        {orders.map(order => {
-          const statusInfo = getStatusColor(order.status);
-          const StatusIcon = statusInfo.icon;
-
-          return (
-            <div key={order.id} className="card-modern">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '1.125rem', marginBottom: '0.25rem' }}>
-                    Order #{order.id.slice(0, 8).toUpperCase()}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-500)' }}>
-                    Placed on {formatDate(order.createdAt)}
-                  </div>
+            {loading && (
+                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                    <Loader2 className="animate-spin" style={{ margin: '0 auto' }} />
                 </div>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '99px',
-                  backgroundColor: statusInfo.bg,
-                  color: statusInfo.color,
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  height: 'fit-content'
-                }}>
-                  <StatusIcon size={14} />
-                  {getStatusLabel(order.status)}
-                </div>
-              </div>
+            )}
 
-              <div style={{ borderTop: '1px solid var(--neutral-gray-100)', borderBottom: '1px solid var(--neutral-gray-100)', padding: '1.5rem 0', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                  <div style={{
-                    width: '3.5rem',
-                    height: '3.5rem',
-                    backgroundColor: 'var(--primary-teal-light)',
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--primary-teal)',
-                    fontWeight: 700
-                  }}>
-                    <PackageIcon size={24} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{order.productName}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-500)' }}>
-                      {order.quantity} {order.unit} × ₹{order.pricePerUnit}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--neutral-gray-500)', marginBottom: '0.25rem' }}>Total</div>
-                    <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>₹{order.totalPrice.toLocaleString()}</div>
-                  </div>
+            {!loading && orders.length === 0 && (
+                <div className="card-modern" style={{ textAlign: 'center', padding: '3rem', color: 'var(--neutral-gray-500)' }}>
+                    <ShoppingBag size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                    <p style={{ fontSize: '1.125rem', fontWeight: 500, marginBottom: '0.5rem' }}>No orders yet</p>
+                    <p style={{ fontSize: '0.875rem' }}>Start by browsing products and placing your first order</p>
                 </div>
+            )}
 
-                <div style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-600)', paddingTop: '1rem', borderTop: '1px solid var(--neutral-gray-100)' }}>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <span style={{ fontWeight: 500 }}>Manufacturer:</span> {order.manufacturerName}
-                  </div>
-                </div>
-              </div>
-
-              {/* Timeline / Status Progress */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', paddingTop: '0.5rem' }}>
-                  {[
-                    { status: 'pending', label: 'Order Placed' },
-                    { status: 'confirmed', label: 'Confirmed' },
-                    { status: 'shipped', label: 'Shipped' },
-                    { status: 'delivered', label: 'Delivered' }
-                  ].map((step, idx) => {
-                    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered'];
-                    const currentIdx = statusOrder.indexOf(order.status);
-                    const isCompleted = statusOrder.indexOf(step.status) <= currentIdx;
-                    const isCurrent = step.status === order.status;
+            <div style={{ display: 'grid', gap: '1.5rem' }}>
+                {orders.map(order => {
+                    const statusInfo = getStatusColor(order.status);
+                    const StatusIcon = statusInfo.icon;
 
                     return (
-                      <div key={step.status} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-                        <div style={{
-                          width: '2.5rem',
-                          height: '2.5rem',
-                          borderRadius: '50%',
-                          backgroundColor: isCompleted ? 'var(--primary-teal)' : 'var(--neutral-gray-200)',
-                          border: isCurrent ? '3px solid var(--primary-teal)' : 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: isCompleted ? 'white' : 'var(--neutral-gray-500)',
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
-                          zIndex: 2,
-                          marginBottom: '0.5rem'
-                        }}>
-                          {isCompleted && <Check size={16} />}
-                        </div>
-                        <div style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          color: isCurrent ? 'var(--primary-teal)' : 'var(--neutral-gray-500)',
-                          textAlign: 'center'
-                        }}>
-                          {step.label}
-                        </div>
+                        <div key={order.id} className="card-modern">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                                <div>
+                                    <div style={{ fontWeight: 700, fontSize: '1.125rem', marginBottom: '0.25rem' }}>
+                                        Order #{order.id.slice(0, 8).toUpperCase()}
+                                    </div>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-500)' }}>
+                                        Placed on {formatDate(order.createdAt)}
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '99px',
+                                    backgroundColor: statusInfo.bg,
+                                    color: statusInfo.color,
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    height: 'fit-content'
+                                }}>
+                                    <StatusIcon size={14} />
+                                    {getStatusLabel(order.status)}
+                                </div>
+                            </div>
 
-                        {idx < 3 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '1.25rem',
-                            left: '50%',
-                            width: '100%',
-                            height: '2px',
-                            backgroundColor: isCompleted ? 'var(--primary-teal)' : 'var(--neutral-gray-200)',
-                            transform: 'translateY(-50%)',
-                            zIndex: 1
-                          }} />
-                        )}
-                      </div>
+                            <div style={{ borderTop: '1px solid var(--neutral-gray-100)', borderBottom: '1px solid var(--neutral-gray-100)', padding: '1.5rem 0', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                    <div style={{
+                                        width: '3.5rem',
+                                        height: '3.5rem',
+                                        backgroundColor: 'var(--primary-teal-light)',
+                                        borderRadius: '0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'var(--primary-teal)',
+                                        fontWeight: 700
+                                    }}>
+                                        <PackageIcon size={24} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{order.productName}</div>
+                                        <div style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-500)' }}>
+                                            {order.quantity} {order.unit} × ₹{order.pricePerUnit}
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--neutral-gray-500)', marginBottom: '0.25rem' }}>Total</div>
+                                        <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>₹{order.totalPrice.toLocaleString()}</div>
+                                    </div>
+                                </div>
+
+                                <div style={{ fontSize: '0.875rem', color: 'var(--neutral-gray-600)', paddingTop: '1rem', borderTop: '1px solid var(--neutral-gray-100)' }}>
+                                    <div style={{ marginBottom: '0.5rem' }}>
+                                        <span style={{ fontWeight: 500 }}>Manufacturer:</span> {order.manufacturerName}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Timeline / Status Progress */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', paddingTop: '0.5rem' }}>
+                                    {[
+                                        { status: 'pending', label: 'Order Placed' },
+                                        { status: 'confirmed', label: 'Confirmed' },
+                                        { status: 'shipped', label: 'Shipped' },
+                                        { status: 'delivered', label: 'Delivered' }
+                                    ].map((step, idx) => {
+                                        const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered'];
+                                        const currentIdx = statusOrder.indexOf(order.status);
+                                        const isCompleted = statusOrder.indexOf(step.status) <= currentIdx;
+                                        const isCurrent = step.status === order.status;
+
+                                        return (
+                                            <div key={step.status} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                                                <div style={{
+                                                    width: '2.5rem',
+                                                    height: '2.5rem',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: isCompleted ? 'var(--primary-teal)' : 'var(--neutral-gray-200)',
+                                                    border: isCurrent ? '3px solid var(--primary-teal)' : 'none',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: isCompleted ? 'white' : 'var(--neutral-gray-500)',
+                                                    fontWeight: 700,
+                                                    fontSize: '0.75rem',
+                                                    zIndex: 2,
+                                                    marginBottom: '0.5rem'
+                                                }}>
+                                                    {isCompleted && <Check size={16} />}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    color: isCurrent ? 'var(--primary-teal)' : 'var(--neutral-gray-500)',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    {step.label}
+                                                </div>
+
+                                                {idx < 3 && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '1.25rem',
+                                                        left: '50%',
+                                                        width: '100%',
+                                                        height: '2px',
+                                                        backgroundColor: isCompleted ? 'var(--primary-teal)' : 'var(--neutral-gray-200)',
+                                                        transform: 'translateY(-50%)',
+                                                        zIndex: 1
+                                                    }} />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <Button variant="outline" size="sm" onClick={() => alert(`Order Details:\n\nProduct: ${order.productName}\nQuantity: ${order.quantity} ${order.unit}\nTotal: ₹${order.totalPrice}\nStatus: ${getStatusLabel(order.status)}\nManufacturer: ${order.manufacturerName}`)}>
+                                    View Details
+                                </Button>
+                                {order.status !== 'delivered' && (
+                                    <Button variant="outline" size="sm" onClick={() => alert(`Order tracking for ${order.id}\n\nExpected delivery in 5-7 business days`)}>
+                                        Track Order
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                     );
-                  })}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <Button variant="outline" size="sm" onClick={() => alert(`Order Details:\n\nProduct: ${order.productName}\nQuantity: ${order.quantity} ${order.unit}\nTotal: ₹${order.totalPrice}\nStatus: ${getStatusLabel(order.status)}\nManufacturer: ${order.manufacturerName}`)}>
-                  View Details
-                </Button>
-                {order.status === 'shipped' && (
-                  <Button size="sm" onClick={() => confirm("Mark this order as received?") && handleUpdateStatus(order.id, 'delivered')}>
-                    Confirm Delivery
-                  </Button>
-                )}
-                {order.status !== 'delivered' && order.status !== 'shipped' && (
-                  <Button variant="outline" size="sm" onClick={() => alert(`Order tracking for ${order.id}\n\nExpected delivery in 5-7 business days`)}>
-                    Track Order
-                  </Button>
-                )}
-              </div>
+                })}
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 const ProfileSettings = ({ user }: { user: any }) => (
